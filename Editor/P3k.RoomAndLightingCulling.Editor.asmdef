@@ -1,0 +1,18 @@
+{
+    "name": "P3k.RoomAndLightingCulling.Editor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:49df51652f2d60146b3c794158173bd4"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

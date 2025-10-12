@@ -1,0 +1,87 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &636222510460611812
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1909285547036190540}
+  - component: {fileID: 9193870634572568635}
+  - component: {fileID: 8935838287929836124}
+  m_Layer: 0
+  m_Name: RoomCullingController
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1909285547036190540
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 636222510460611812}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.23556617, y: 0, z: 0, w: 0.9718583}
+  m_LocalPosition: {x: 0, y: 12, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 27.25, y: 0, z: 0}
+--- !u!114 &9193870634572568635
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 636222510460611812}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9a8ed7b84a9bcbb4882e5f361c214475, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: P3k.DungeonGenerator::P3k.Quota.Core.Adapters.Components.Camera.RoomCullingController
+  _isGUIVisible: 1
+  _toggleKey: 99
+  <Config>k__BackingField:
+    RoomEnableDistance: 80
+    RoomDisableDistance: 100
+    LightEnableDistance: 30
+    LightDisableDistance: 40
+    LightMaxIntensityDistance: 20
+    InnerFalloffPower: 1
+    VerticalTolerance: 10
+    ChecksPerFrame: 64
+    ShadowsCount: 12
+    MaxShadowDistance: 60
+    SoftShadowDistance: 50
+    ApplyMaxShadowDistanceToRenderPipeline: 1
+  _meshRoomsParent: {fileID: 0}
+--- !u!114 &8935838287929836124
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 636222510460611812}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 92bb013deec72434d9e6fc65bc05dbe5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: P3k.RoomAndLightingCulling::P3k.DungeonGenerator.Adapters.Components.DynamicLightRenderLayerController
+  _colorCount: 7
+  _configuredLightLayers: 8
+  _coolDownSeconds: 0.5
+  _meshRoomsParent: {fileID: 0}
+  _dynamicMode: 1
+  _firstBit: 1
+  _includeInactiveChildren: 1
+  _minSeparation: 50
+  _moveGate: 0.5
+  _radiusIn: 100
+  _radiusOut: 150
+  _tickInterval: 0.1

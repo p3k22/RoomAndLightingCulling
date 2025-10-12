@@ -1,0 +1,13 @@
+{
+    "name": "com.p3k.room-and-lighting-culling",
+    "version": "1.0.0",
+    "displayName": "Room And Lighting Culling",
+    "description": "Performance-optimized room and lighting culling system with distance-based rendering and dynamic shadow management",
+    "unity": "2020.1",
+    "documentationUrl": "https://github.com/p3k22/RoomAndLightingCulling/#readme",
+    "author": { "name": "P3k" },
+    "dependencies": {
+        "com.unity.render-pipelines.universal": "10.0.0",
+        "com.unity.inputsystem": "1.0.0"
+    }
+}
