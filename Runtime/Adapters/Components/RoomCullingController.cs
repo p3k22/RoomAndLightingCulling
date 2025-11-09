@@ -30,12 +30,12 @@ namespace P3k.RoomAndLightingCulling.Adapters.Components
       /// </summary>
       public IReadOnlyList<RoomRendererRecord> EnabledRooms => _roomCullingService?.EnabledRooms;
 
-      private void Awake()
+      private IEnumerator Start()
       {
          if (Config == null)
          {
             enabled = false;
-            return;
+            yield break;
          }
 
          _roomCullingService = new RoomCullingService(Config, () => transform.position);
@@ -44,10 +44,7 @@ namespace P3k.RoomAndLightingCulling.Adapters.Components
          {
             Initiate(_meshRoomsParent);
          }
-      }
 
-      private IEnumerator Start()
-      {
          yield return new WaitForSeconds(1.5f);
          _win = new(Screen.width - 400, Screen.height - 340, 390, 320);
       }

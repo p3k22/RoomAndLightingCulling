@@ -22,6 +22,8 @@ namespace P3k.RoomAndLightingCulling.Editor.CustomInspectors
 
       private SerializedProperty _dynamicMode, _radiusIn, _radiusOut, _moveGate, _coolDownSeconds, _tickInterval;
 
+      private SerializedProperty _proximityFactor;
+
       private void OnEnable()
       {
          _isShowingGizmos = serializedObject.FindProperty("_isShowingGizmos");
@@ -29,6 +31,7 @@ namespace P3k.RoomAndLightingCulling.Editor.CustomInspectors
          _firstBit = serializedObject.FindProperty("_firstBit");
          _colorCount = serializedObject.FindProperty("_colorCount");
          _minSeparation = serializedObject.FindProperty("_minSeparation");
+         _proximityFactor = serializedObject.FindProperty("_proximityFactor");
          _includeInactiveChildren = serializedObject.FindProperty("_includeInactiveChildren");
          _dynamicMode = serializedObject.FindProperty("_dynamicMode");
          _radiusIn = serializedObject.FindProperty("_radiusIn");
@@ -65,6 +68,7 @@ namespace P3k.RoomAndLightingCulling.Editor.CustomInspectors
          EditorGUILayout.IntSlider(_colorCount, 1, maxUsable);
 
          EditorGUILayout.PropertyField(_minSeparation);
+         EditorGUILayout.PropertyField(_proximityFactor);
 
          EditorGUILayout.Space();
          EditorGUILayout.LabelField("Light Render Layer Dynamic Settings", EditorStyles.whiteBoldLabel);

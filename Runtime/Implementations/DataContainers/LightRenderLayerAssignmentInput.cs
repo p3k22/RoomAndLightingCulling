@@ -26,9 +26,12 @@ namespace P3k.RoomAndLightingCulling.Implementations.DataContainers
 
       internal bool DynamicMode => PlayerPosition.HasValue && RadiusIn > 0f;
 
+      internal readonly int ProximityFactor;
+
       internal LightRenderLayerAssignmentInput(
          Transform roomsRoot,
          float minSeparation,
+         int proximityFactor,
          bool includeInactiveChildren = false,
          Vector3? playerPosition = null,
          float radiusIn = 0f,
@@ -39,6 +42,7 @@ namespace P3k.RoomAndLightingCulling.Implementations.DataContainers
       {
          RoomsRoot = roomsRoot;
          MinSeparation = minSeparation;
+         ProximityFactor = proximityFactor;
          IncludeInactiveChildren = includeInactiveChildren;
          PlayerPosition = playerPosition;
          RadiusIn = radiusIn;

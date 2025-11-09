@@ -24,6 +24,11 @@ namespace P3k.RoomAndLightingCulling.Implementations.Services
 
       private readonly int _firstBit;
 
+      // proximity configuration: treat rooms within _proximityFactor * minSeparation as nearby
+      private float _proximityFactor = 1.5f;
+
+      private float _minSeparationUsed = 0f;
+
       private bool _haveLastPlayerPos;
 
       private Vector3 _lastPlayerPos;
@@ -56,7 +61,7 @@ namespace P3k.RoomAndLightingCulling.Implementations.Services
          }
 
          ComputeBounds(input.IncludeInactiveChildren);
-         BuildConflictGraph(input.MinSeparation);
+         BuildConflictGraph(input.MinSeparation, input.ProximityFactor);
 
          if (!input.DynamicMode)
          {
@@ -98,17 +103,46 @@ namespace P3k.RoomAndLightingCulling.Implementations.Services
          var assigned = SnapshotCurrent();
 
          var orderInside = inside.OrderByDescending(i => _conflicts[i].Count).ToList();
+
+         // Prepare allowed masks and track used masks within the 'inside' set so we can prefer uniqueness
+         var allowedMasks = GetAllowedMasks().ToList();
+         var usedInInside = new HashSet<uint>();
+         for (var i = 0; i < inside.Count; i++)
+         {
+            var idx = inside[i];
+            var m = assigned[idx];
+            if (m != 0u && IsAllowedMask(m))
+            {
+               usedInInside.Add(m);
+            }
+         }
+
          for (var k = 0; k < orderInside.Count; k++)
          {
             var idx = orderInside[k];
             var banned = GetBannedMasksLocal(idx, assigned, inside);
-            var chosen = ChooseMask(banned);
+
+            // prefer an allowed mask that isn't banned and isn't already used by another inside-room
+            var prefer = 0u;
+            for (var ai = 0; ai < allowedMasks.Count; ai++)
+            {
+               var cand = allowedMasks[ai];
+               if (!banned.Contains(cand) && !usedInInside.Contains(cand))
+               {
+                  prefer = cand;
+                  break;
+               }
+            }
+
+            // choose the best mask for this room taking proximity usage into account
+            var chosen = ChooseBestMaskForRoom(idx, banned, prefer, assigned);
             if (chosen == 0u)
             {
                continue;
             }
 
             assigned[idx] = chosen;
+            usedInInside.Add(chosen);
          }
 
          for (var k = 0; k < border.Count; k++)
@@ -235,8 +269,11 @@ namespace P3k.RoomAndLightingCulling.Implementations.Services
       #endif
       }
 
-      private void BuildConflictGraph(float minSeparation)
+      private void BuildConflictGraph(float minSeparation, int proximityFactor)
       {
+         _minSeparationUsed = Mathf.Max(0f, minSeparation);
+         _proximityFactor = Mathf.Max(0f, proximityFactor);
+
          var n = _roomKeys.Count;
          _conflicts = new List<int>[n];
          for (var i = 0; i < n; i++)
@@ -271,7 +308,7 @@ namespace P3k.RoomAndLightingCulling.Implementations.Services
 
       private uint ChooseMask(HashSet<uint> banned, uint prefer = 0u)
       {
-         if (prefer != 0u && !banned.Contains(prefer))
+         if (prefer != 0u && !banned.Contains(prefer) && IsAllowedMask(prefer))
          {
             return prefer;
          }
@@ -287,6 +324,71 @@ namespace P3k.RoomAndLightingCulling.Implementations.Services
          }
 
          return 0u;
+      }
+
+      private uint ChooseBestMaskForRoom(int idx, HashSet<uint> banned, uint prefer, uint[] assigned)
+      {
+         if (prefer != 0u && !banned.Contains(prefer) && IsAllowedMask(prefer))
+         {
+            return prefer;
+         }
+
+         var best = 0u;
+         var bestScore = int.MaxValue;
+
+         for (var c = 0; c < _colorCount; c++)
+         {
+            var bit = _firstBit + c;
+            var cand = 1u << bit;
+            if (banned.Contains(cand))
+            {
+               continue;
+            }
+
+            // score = number of nearby rooms already using this mask (lower is better)
+            var score = 0;
+            for (var j = 0; j < _roomKeys.Count; j++)
+            {
+               if (j == idx)
+               {
+                  continue;
+               }
+
+               if (assigned[j] != cand)
+               {
+                  continue;
+               }
+
+               if (IsWithinProximity(idx, j))
+               {
+                  score++;
+               }
+            }
+
+            if (score < bestScore)
+            {
+               bestScore = score;
+               best = cand;
+
+               if (score == 0)
+               {
+                  break; // can't beat zero
+               }
+            }
+         }
+
+         return best;
+      }
+
+      private bool IsWithinProximity(int a, int b)
+      {
+         if (_minSeparationUsed <= 0f)
+         {
+            return false;
+         }
+
+         var threshold = _minSeparationUsed * _proximityFactor;
+         return AABBtoAABBDistance(_bounds[a], _bounds[b]) < threshold;
       }
 
       private void CollectRooms(Transform root, bool includeInactiveChildren)
@@ -363,9 +465,31 @@ namespace P3k.RoomAndLightingCulling.Implementations.Services
          for (var i = 0; i < neigh.Count; i++)
          {
             var m = assigned[neigh[i]];
-            if (m != 0u)
+            if (m != 0u && IsAllowedMask(m))
             {
                set.Add(m);
+            }
+         }
+
+         // also ban masks used by any room within proximity threshold
+         if (_minSeparationUsed > 0f)
+         {
+            var threshold = _minSeparationUsed * _proximityFactor;
+            for (var j = 0; j < _roomKeys.Count; j++)
+            {
+               if (j == idx)
+               {
+                  continue;
+               }
+
+               if (AABBtoAABBDistance(_bounds[idx], _bounds[j]) < threshold)
+               {
+                  var m = assigned[j];
+                  if (m != 0u && IsAllowedMask(m))
+                  {
+                     set.Add(m);
+                  }
+               }
             }
          }
 
@@ -385,9 +509,26 @@ namespace P3k.RoomAndLightingCulling.Implementations.Services
             }
 
             var m = assigned[j];
-            if (m != 0u)
+            if (m != 0u && IsAllowedMask(m))
             {
                set.Add(m);
+            }
+         }
+
+         // also ban masks used by any room in `localSet` or within proximity to idx
+         if (_minSeparationUsed > 0f)
+         {
+            var threshold = _minSeparationUsed * _proximityFactor;
+            for (var j = 0; j < _roomKeys.Count; j++)
+            {
+               if (localSet.Contains(j) || AABBtoAABBDistance(_bounds[idx], _bounds[j]) < threshold)
+               {
+                  var m = assigned[j];
+                  if (m != 0u && IsAllowedMask(m))
+                  {
+                     set.Add(m);
+                  }
+               }
             }
          }
 
@@ -425,10 +566,80 @@ namespace P3k.RoomAndLightingCulling.Implementations.Services
          for (var i = 0; i < _roomKeys.Count; i++)
          {
             var t = _roomKeys[i];
-            assigned[i] = _currentMaskByRoom.TryGetValue(t, out var m) ? m : 0u;
+
+            // Prefer stored current mask if it's allowed
+            if (_currentMaskByRoom.TryGetValue(t, out var stored) && IsAllowedMask(stored))
+            {
+               assigned[i] = stored;
+               continue;
+            }
+
+            // Otherwise inspect the renderers in the room and pick the most common allowed single-bit mask
+            var counts = new Dictionary<uint, int>();
+            var (renderers, _) = _rooms[t];
+            for (var r = 0; r < renderers.Count; r++)
+            {
+               var mr = renderers[r];
+               if (!mr)
+               {
+                  continue;
+               }
+
+               var m = mr.renderingLayerMask;
+               if (!IsAllowedMask(m))
+               {
+                  continue;
+               }
+
+               if (!counts.TryGetValue(m, out var c))
+               {
+                  counts[m] = 1;
+               }
+               else
+               {
+                  counts[m] = c + 1;
+               }
+            }
+
+            if (counts.Count > 0)
+            {
+               assigned[i] = counts.OrderByDescending(kv => kv.Value).First().Key;
+            }
+            else
+            {
+               assigned[i] = 0u;
+            }
          }
 
          return assigned;
+      }
+
+      // Helper: enumerate allowed single-bit masks based on configured first bit and color count
+      private IEnumerable<uint> GetAllowedMasks()
+      {
+         for (var c = 0; c < _colorCount; c++)
+         {
+            yield return 1u << (_firstBit + c);
+         }
+      }
+
+      // Helper: return true only for masks equal to one of the allowed single-bit masks
+      private bool IsAllowedMask(uint m)
+      {
+         if (m == 0u)
+         {
+            return false;
+         }
+
+         for (var c = 0; c < _colorCount; c++)
+         {
+            if (m == 1u << (_firstBit + c))
+            {
+               return true;
+            }
+         }
+
+         return false;
       }
    }
 }

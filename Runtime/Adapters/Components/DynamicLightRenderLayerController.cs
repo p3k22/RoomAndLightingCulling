@@ -23,7 +23,7 @@ namespace P3k.RoomAndLightingCulling.Adapters.Components
 
       public int FirstBit => _firstBit;
 
-      private void Awake()
+      private void Start()
       {
          ClampColorCountToStoredConfig();
          _service = new DynamicLightRenderLayerAssignmentService(_firstBit, _colorCount, _configuredLightLayers);
@@ -53,6 +53,7 @@ namespace P3k.RoomAndLightingCulling.Adapters.Components
          var input = new LightRenderLayerAssignmentInput(
          _meshRoomsParent,
          _minSeparation,
+         _proximityFactor,
          _includeInactiveChildren,
          transform.position,
          _radiusIn,
@@ -66,7 +67,11 @@ namespace P3k.RoomAndLightingCulling.Adapters.Components
       public void AssignOnce()
       {
          EnsureService();
-         var input = new LightRenderLayerAssignmentInput(_meshRoomsParent, _minSeparation, _includeInactiveChildren);
+         var input = new LightRenderLayerAssignmentInput(
+         _meshRoomsParent,
+         _minSeparation,
+         _proximityFactor,
+         _includeInactiveChildren);
          _service.Assign(input);
       }
 
@@ -345,6 +350,9 @@ namespace P3k.RoomAndLightingCulling.Adapters.Components
 
       [SerializeField]
       private float _minSeparation = 5f;
+
+      [SerializeField]
+      private int _proximityFactor = 3;
 
       [SerializeField]
       private float _moveGate = 0.5f;
